@@ -1,7 +1,7 @@
 package com.hodolog.controller;
 
-import com.hodolog.controller.response.ApiCode;
-import com.hodolog.controller.response.ErrorResponse;
+import com.hodolog.response.ApiCode;
+import com.hodolog.response.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;

@@ -1,4 +1,4 @@
-package com.hodolog.controller.response;
+package com.hodolog.response;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
