@@ -2,6 +2,7 @@ package com.hodolog.controller;
 
 import com.hodolog.domain.Post;
 import com.hodolog.repository.PostRepository;
+import com.hodolog.request.PostCreate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -11,6 +12,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+import tools.jackson.databind.ObjectMapper;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -23,8 +25,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class PostControllerTest {
 
     @Autowired
+    ObjectMapper objectMapper;
+    @Autowired
     private MockMvc mockMvc;
-
     @Autowired
     private PostRepository postRepository;
 
@@ -47,22 +50,31 @@ class PostControllerTest {
     @Test
     @DisplayName("POST /posts: code=OK, data에 title/content 포함")
     void postPosts_ok() throws Exception {
-        performPost("""
-                {"title":"제목입니다","content":"내용입니다"}
-                """)
+        // Given
+        PostCreate postCreate = PostCreate.builder()
+                .title("제목입니다")
+                .content("내용입니다")
+                .build();
+
+        // When & Then
+        performPost(this.toJson(postCreate))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value("OK"))
-                .andExpect(jsonPath("$.data.title").value("제목입니다"))
-                .andExpect(jsonPath("$.data.content").value("내용입니다"))
+                .andExpect(jsonPath("$.data.title").value(postCreate.getTitle()))
+                .andExpect(jsonPath("$.data.content").value(postCreate.getContent()))
                 .andDo(print());
     }
 
     @Test
     @DisplayName("POST /posts: title이 비어있으면 VALIDATION_ERROR + validation.title")
     void postPosts_titleBlank_badRequest() throws Exception {
-        performPost("""
-                {"title":"","content":"내용입니다"}
-                """)
+        // Given
+        PostCreate postCreate = PostCreate.builder()
+                .content("내용입니다")
+                .build();
+
+        // When & Then
+        performPost(this.toJson(postCreate))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
                 .andExpect(jsonPath("$.message").value("요청 값이 올바르지 않습니다."))
@@ -74,9 +86,13 @@ class PostControllerTest {
     @Test
     @DisplayName("POST /posts: content가 비어있으면 VALIDATION_ERROR + validation.content")
     void postPosts_contentBlank_badRequest() throws Exception {
-        performPost("""
-                {"title":"제목입니다","content":""}
-                """)
+        // Given
+        PostCreate postCreate = PostCreate.builder()
+                .title("제목입니다")
+                .build();
+
+        // When & Then
+        performPost(this.toJson(postCreate))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
                 .andExpect(jsonPath("$.message").value("요청 값이 올바르지 않습니다."))
@@ -88,10 +104,14 @@ class PostControllerTest {
     @Test
     @DisplayName("POST /posts: 요청시 DB에 값이 저장됩니다.")
     void postPosts_save_db() throws Exception {
+        // Given
+        PostCreate postCreate = PostCreate.builder()
+                .title("제목입니다")
+                .content("내용입니다")
+                .build();
+
         // When
-        performPost("""
-                {"title":"제목입니다.","content":"내용입니다."}
-                """)
+        performPost(this.toJson(postCreate))
                 .andExpect(status().isOk())
                 .andDo(print());
 
@@ -100,8 +120,8 @@ class PostControllerTest {
 
         Post post = this.postRepository.findAll().getFirst();
 
-        assertEquals("제목입니다.", post.getTitle());
-        assertEquals("내용입니다.", post.getContent());
+        assertEquals(postCreate.getTitle(), post.getTitle());
+        assertEquals(postCreate.getContent(), post.getContent());
     }
 
     private ResultActions performPost(String json) throws Exception {
@@ -109,5 +129,10 @@ class PostControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
                 .content(json));
+    }
+
+
+    private String toJson(Object obj) {
+        return objectMapper.writeValueAsString(obj);
     }
 }

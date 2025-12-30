@@ -16,7 +16,10 @@ public class PostService {
     private final PostRepository postRepository;
 
     public PostResponse write(PostCreate postCreate) {
-        Post post = Post.of(postCreate.getTitle(), postCreate.getContent());
+        Post post = Post.builder()
+                .title(postCreate.getTitle())
+                .content(postCreate.getContent())
+                .build();
         this.postRepository.save(post);
 
         return PostResponse.builder()
