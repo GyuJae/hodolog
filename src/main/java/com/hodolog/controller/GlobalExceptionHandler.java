@@ -1,5 +1,6 @@
 package com.hodolog.controller;
 
+import com.hodolog.exception.PostNotFoundException;
 import com.hodolog.response.ApiCode;
 import com.hodolog.response.ErrorResponse;
 import org.springframework.http.HttpStatus;
@@ -30,5 +31,15 @@ public class GlobalExceptionHandler {
                 .build();
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
+
+    @ExceptionHandler(PostNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handlePostNotFound(PostNotFoundException e) {
+        ErrorResponse body = ErrorResponse.builder()
+                .code(ApiCode.NOT_FOUND.getCode())
+                .message(e.getMessage())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
     }
 }
